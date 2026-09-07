@@ -4,7 +4,9 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+    <div className="landing-shell relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      <div className="landing-orb landing-orb-one" />
+      <div className="landing-orb landing-orb-two" />
       {children}
     </div>
   );

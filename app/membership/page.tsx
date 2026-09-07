@@ -70,7 +70,7 @@ export default async function MembershipPage() {
               </div>
               <div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {t("joinDate")}
+                  Join date
                 </p>
                 <p className="font-semibold text-slate-900 dark:text-white">
                   {formatDate(activeMembership.startDate)}
@@ -78,7 +78,7 @@ export default async function MembershipPage() {
               </div>
               <div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {t("expiryDate")}
+                  Expiry date
                 </p>
                 <p className="font-semibold text-slate-900 dark:text-white">
                   {formatDate(activeMembership.endDate)}
@@ -86,7 +86,7 @@ export default async function MembershipPage() {
               </div>
               <div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {t("price")}
+                  Price
                 </p>
                 <p className="font-semibold text-slate-900 dark:text-white">
                   {formatCurrency(activeMembership.amountPaid, "INR")}
@@ -126,7 +126,7 @@ export default async function MembershipPage() {
                           {new Date(payment.createdAt).toLocaleDateString("en-IN")}
                         </p>
                       </div>
-                      <Badge variant="success">
+                      <Badge className="border-transparent bg-emerald-600 text-white hover:bg-emerald-600">
                         {payment.status}
                       </Badge>
                     </div>
@@ -145,7 +145,7 @@ export default async function MembershipPage() {
           <CardHeader>
             <CardTitle>No Active Membership</CardTitle>
             <CardDescription>
-              You don't have an active membership. Upgrade to enjoy all features.
+              You don&apos;t have an active membership. Upgrade to enjoy all features.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -54,12 +54,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full max-w-md">
+    <div className="page-enter w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/65 p-6 shadow-2xl shadow-slate-950/40 backdrop-blur sm:p-8">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">
           FitLife Pro
         </h1>
-        <p className="text-slate-400">Welcome back! Sign in to continue</p>
+        <p className="text-slate-400">Welcome back. Let’s continue your routine.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -101,7 +101,7 @@ export default function LoginPage() {
         </a>
       </p>
 
-      <div className="mt-8 text-center text-sm text-slate-500">
+      <div className="mt-8 rounded-lg border border-slate-700/70 bg-slate-800/60 p-3 text-center text-sm text-slate-400">
         <p className="mb-2">Demo Credentials:</p>
         <p>Admin: admin@fitlifepro.com / admin123</p>
         <p>Trainer: trainer@fitlifepro.com / trainer123</p>

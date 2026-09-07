@@ -77,8 +77,8 @@ export const exerciseSchema = z.object({
   equipment: z.string().optional(),
   instructions: z.string().optional(),
   defaultSets: z.number().int().min(1).max(10),
-  defaultReps: z.number().int().min(1).max_99("Reps cannot exceed 99"),
-  defaultRest: z.number().int().min(0).max_600("Rest time cannot exceed 600 seconds"),
+  defaultReps: z.number().int().min(1).max(99, "Reps cannot exceed 99"),
+  defaultRest: z.number().int().min(0).max(600, "Rest time cannot exceed 600 seconds"),
 });
 
 export const workoutLogSchema = z.object({
@@ -130,12 +130,12 @@ export const waterLogSchema = z.object({
 export const measurementSchema = z.object({
   weightKg: z.number().min(20).max(500).optional(),
   bodyFatPercent: z.number().min(0).max(100).optional(),
-  chestCm: z.number().min(50).max_200("Chest must be between 50 and 200cm").optional(),
-  waistCm: z.number().min(50).max_200("Waist must be between 50 and 200cm").optional(),
-  hipCm: z.number().min(50).max_200("Hip must be between 50 and 200cm").optional(),
-  armCm: z.number().min(50).max_200("Arm must be between 50 and 200cm").optional(),
-  thighCm: z.number().min(50).max_200("Thigh must be between 50 and 200cm").optional(),
-  calfCm: z.number().min(50).max_200("Calf must be between 50 and 200cm").optional(),
+  chestCm: z.number().min(50).max(200, "Chest must be between 50 and 200cm").optional(),
+  waistCm: z.number().min(50).max(200, "Waist must be between 50 and 200cm").optional(),
+  hipCm: z.number().min(50).max(200, "Hip must be between 50 and 200cm").optional(),
+  armCm: z.number().min(50).max(200, "Arm must be between 50 and 200cm").optional(),
+  thighCm: z.number().min(50).max(200, "Thigh must be between 50 and 200cm").optional(),
+  calfCm: z.number().min(50).max(200, "Calf must be between 50 and 200cm").optional(),
 });
 
 // Attendance validations

@@ -1,70 +1,18 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { Activity, ArrowRight, BarChart3, Dumbbell, HeartPulse } from "lucide-react";
+import { authOptions } from "@/lib/auth";
+import { Card, CardContent } from "@/components/ui/card";
+
+const features = [
+  { icon: Dumbbell, title: "Train with purpose", description: "Follow workouts, log sessions, and keep your routine moving." },
+  { icon: HeartPulse, title: "Fuel your progress", description: "Make nutrition and hydration part of your daily rhythm." },
+  { icon: BarChart3, title: "See your momentum", description: "Turn regular check-ins into a clear view of your progress." },
+];
 
 export default async function HomePage() {
   const session = await getServerSession(authOptions);
+  if (session?.user) redirect("/dashboard");
 
-  if (session?.user) {
-    redirect("/dashboard");
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <div className="max-w-7xl mx-auto text-center space-y-8">
-        <div className="space-y-4">
-          <h1 className="text-6xl md:text-8xl font-bold text-white tracking-tight">
-            FitLife Pro
-          </h1>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-            The complete fitness management and personal tracking platform
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <a
-            href="/login"
-            className="px-8 py-4 bg-primary text-primary-foreground rounded-lg text-lg font-semibold hover:bg-primary/90 transition-colors"
-          >
-            Get Started
-          </a>
-          <a
-            href="/register"
-            className="px-8 py-4 bg-transparent border-2 border-slate-700 text-slate-300 rounded-lg text-lg font-semibold hover:bg-slate-800 transition-colors"
-          >
-            Create Account
-          </a>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-4xl mx-auto">
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="pt-6">
-              <h3 className="text-xl font-bold text-white mb-2">Track Workouts</h3>
-              <p className="text-slate-400">
-                Log exercises, sets, and reps with ease
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="pt-6">
-              <h3 className="text-xl font-bold text-white mb-2">Monitor Nutrition</h3>
-              <p className="text-slate-400">
-                Track meals, calories, and macros
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="pt-6">
-              <h3 className="text-xl font-bold text-white mb-2">Visual Progress</h3>
-              <p className="text-slate-400">
-                Monitor weight and body measurements
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
+  return <main className="landing-shell"><div className="landing-orb landing-orb-one" /><div className="landing-orb landing-orb-two" /><section className="relative mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-5 py-16 sm:px-8"><div className="max-w-3xl page-enter"><div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1 text-sm font-medium text-sky-100"><Activity className="h-4 w-4" /> A healthier routine, built around you</div><h1 className="text-balance text-5xl font-bold tracking-tight text-white sm:text-7xl">Fitness that feels <span className="text-sky-300">possible</span> every day.</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">FitLife Pro gives you one focused place to train, nourish, and track the progress that matters to you.</p><div className="mt-9 flex flex-col gap-3 sm:flex-row"><a href="/register" className="motion-button inline-flex items-center justify-center rounded-lg bg-sky-400 px-6 py-3.5 font-semibold text-slate-950 shadow-lg shadow-sky-400/20 hover:bg-sky-300">Create your account <ArrowRight className="ml-2 h-4 w-4" /></a><a href="/login" className="motion-button inline-flex items-center justify-center rounded-lg border border-slate-600 px-6 py-3.5 font-semibold text-white hover:border-slate-400 hover:bg-white/5">Sign in</a></div></div><div className="mt-16 grid gap-4 md:grid-cols-3">{features.map(({ icon: Icon, title, description }, index) => <Card key={title} className="motion-card border-white/10 bg-slate-900/55 text-white backdrop-blur" style={{ animationDelay: `${180 + index * 90}ms` }}><CardContent className="pt-6"><span className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-400/15 text-sky-300"><Icon className="h-5 w-5" /></span><h2 className="mt-5 text-lg font-semibold">{title}</h2><p className="mt-2 leading-6 text-slate-300">{description}</p></CardContent></Card>)}</div></section></main>;
 }

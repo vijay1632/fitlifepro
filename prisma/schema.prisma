@@ -103,15 +103,17 @@ model User {
   // Relations
   profile       Profile?
   trainer       Trainer?
+  member        Member?
   memberships   Membership[]
   attendance    Attendance[]
   workoutLogs   WorkoutLog[]
+  workoutAssignments WorkoutAssignment[]
   foodLogs      FoodLog[]
   waterLogs     WaterLog[]
   measurements  Measurement[]
   progressPhotos ProgressPhoto[]
   notifications Notification[]
-  session       Session?
+  personalRecords PersonalRecord[]
 
   @@index([email])
   @@index([role])
@@ -202,9 +204,8 @@ model Trainer {
   updatedAt       DateTime            @updatedAt
 
   // Relations
-  users           User[]
-  memberships     Membership[]
   assignedMembers Member[]            @relation("TrainerMembers")
+  profiles        Profile[]
   workoutPlans    WorkoutPlan[]
 
   @@index([userId])
@@ -234,14 +235,7 @@ model Member {
   updatedAt       DateTime            @updatedAt
 
   // Relations
-  user            User
-  memberships     Membership[]
   attendance      Attendance[]
-  workoutLogs     WorkoutLog[]
-  foodLogs        FoodLog[]
-  waterLogs       WaterLog[]
-  measurements    Measurement[]
-  progressPhotos  ProgressPhoto[]
   trainer         Trainer?            @relation("TrainerMembers", fields: [trainerId], references: [id])
 
   @@index([userId])
@@ -296,8 +290,7 @@ model Membership {
   updatedAt       DateTime             @updatedAt
 
   // Relations
-  user            User
-  plan            MembershipPlan
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   payments        Payment[]
 
   @@index([userId])
@@ -384,6 +377,9 @@ model Exercise {
 
   @@index([muscleGroup])
   @@index([difficulty])
+  workoutPlanExercises WorkoutPlanExercise[]
+  workoutSets          WorkoutSet[]
+  personalRecords      PersonalRecord[]
 }
 
 // Workout Plan - trainer-created workout program
@@ -407,9 +403,9 @@ model WorkoutPlan {
   updatedAt   DateTime         @updatedAt
 
   // Relations
-  trainer     Trainer
   workoutPlanExercises WorkoutPlanExercise[]
   workoutAssignments   WorkoutAssignment[]
+  workoutLogs          WorkoutLog[]
 
   @@index([trainerId])
   @@index([isActive])
@@ -481,8 +477,6 @@ model WorkoutLog {
   updatedAt   DateTime            @updatedAt
 
   // Relations
-  user        User
-  workoutPlan WorkoutPlan?
   workoutSets WorkoutSet[]
 
   @@index([userId])
@@ -560,6 +554,7 @@ model FoodItem {
   updatedAt   DateTime @updatedAt
 
   @@index([name])
+  foodLogs    FoodLog[]
 }
 
 // Food Log - logged food entry
@@ -582,8 +577,6 @@ model FoodLog {
   updatedAt   DateTime      @updatedAt
 
   // Relations
-  user        User
-  food        FoodItem
 
   @@index([userId])
   @@index([foodId])

@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Layout, LogOut, User, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, User, Settings as SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export function Settings() {
@@ -59,7 +59,7 @@ export function Settings() {
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <a href="/membership">
-              <Settings className="mr-2 h-4 w-4" />
+              <SettingsIcon className="mr-2 h-4 w-4" />
               {t("membership")}
             </a>
           </DropdownMenuItem>

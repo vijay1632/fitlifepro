@@ -21,21 +21,26 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      toast({ title: "Passwords don’t match", description: "Please enter the same password twice.", variant: "destructive" });
+      return;
+    }
     setIsLoading(true);
 
     try {
-      // For demo, just redirect to login after 2 seconds
-      setTimeout(() => {
-        toast({
-          title: t("profileCreated"),
-          description: "Registration successful!",
-        });
-        router.push("/login");
-      }, 2000);
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, password: formData.password }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      toast({ title: t("profileCreated"), description: "You can now sign in." });
+      router.push("/login");
     } catch (error) {
       toast({
         title: "Error",
-        description: t("loginFailed"),
+        description: error instanceof Error ? error.message : t("loginFailed"),
         variant: "destructive",
       });
     } finally {
@@ -44,7 +49,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="w-full max-w-md">
+    <div className="page-enter w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/65 p-6 shadow-2xl shadow-slate-950/40 backdrop-blur sm:p-8">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">
           FitLife Pro

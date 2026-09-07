@@ -1,376 +1,47 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Water } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { Droplets, Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useSession } from "next-auth/react";
-import { today } from "@internationalized/date";
+
+type Food = { id: string; name: string; servingSize: string; calories: number };
+type FoodLog = { id: string; mealType: string; quantity: number; food: Food };
+type NutritionData = { foods: Food[]; logs: FoodLog[]; stats: { calories: number; protein: number; carbs: number; fat: number; water: number } };
+
+const targets = [["Calories", "calories", 2000, "kcal", "bg-orange-500"], ["Protein", "protein", 160, "g", "bg-blue-500"], ["Carbs", "carbs", 250, "g", "bg-emerald-500"], ["Fat", "fat", 70, "g", "bg-amber-500"]] as const;
 
 export default function NutritionPage() {
-  const t = useTranslations("nutrition");
   const { toast } = useToast();
-  const session = useSession();
-  const todayDate = new Date();
-  todayDate.setHours(0, 0, 0, 0);
-
+  const [data, setData] = useState<NutritionData | null>(null);
   const [selectedFood, setSelectedFood] = useState("");
-  const [quantity, setQuantity] = useState("100");
+  const [quantity, setQuantity] = useState("1");
   const [mealType, setMealType] = useState("LUNCH");
-  const [selectedWater, setSelectedWater] = useState("250");
+  const [isSaving, setIsSaving] = useState(false);
+  const load = useCallback(async () => { const response = await fetch("/api/nutrition", { cache: "no-store" }); if (response.ok) setData(await response.json()); }, []);
+  useEffect(() => { void load(); }, [load]);
 
-  const [dailyStats, setDailyStats] = useState({
-    calories: 0,
-    protein: 0,
-    carbs: 0,
-    fat: 0,
-    water: 0,
-  });
-
-  const [recentLogs, setRecentLogs] = useState<any[]>([]);
-
-  // Fetch daily stats and logs on mount
-  const fetchData = async () => {
-    if (!session.data?.user) return;
-
-    const userId = session.data.user.id;
-
-    // Get today's food logs
-    const foodLogs = await prisma.foodLog.findMany({
-      where: {
-        userId,
-        date: todayDate,
-      },
-      include: {
-        food: true,
-      },
-    });
-
-    const totalCalories = foodLogs.reduce((sum, log) => sum + log.food.calories * log.quantity, 0);
-    const totalProtein = foodLogs.reduce((sum, log) => sum + log.food.protein * log.quantity, 0);
-    const totalCarbs = foodLogs.reduce((sum, log) => sum + log.food.carbs * log.quantity, 0);
-    const totalFat = foodLogs.reduce((sum, log) => sum + log.food.fat * log.quantity, 0);
-
-    setDailyStats({
-      calories: totalCalories,
-      protein: totalProtein,
-      carbs: totalCarbs,
-      fat: totalFat,
-      water: 0,
-    });
-
-    // Get recent logs
-    setRecentLogs(foodLogs.slice(-5).reverse());
-  };
-
-  if (typeof window !== "undefined") {
-    fetchData();
+  async function save(body: Record<string, unknown>, success: string) {
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/nutrition", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      toast({ title: "Saved", description: success });
+      await load();
+    } catch (error) {
+      toast({ title: "Couldn’t save", description: error instanceof Error ? error.message : "Please try again.", variant: "destructive" });
+    } finally { setIsSaving(false); }
   }
 
-  const handleAddFood = async () => {
-    if (!selectedFood || !quantity) {
-      toast({
-        title: "Error",
-        description: "Please select food and quantity",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const food = await prisma.foodItem.findUnique({
-        where: { id: selectedFood },
-      });
-
-      if (!food) {
-        toast({
-          title: "Error",
-          description: "Food not found",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      await prisma.foodLog.create({
-        data: {
-          userId: session.data?.user.id,
-          foodId: selectedFood,
-          mealType: mealType as any,
-          quantity: parseFloat(quantity),
-          notes: "Added from food log",
-        },
-      });
-
-      toast({
-        title: "Success",
-        description: "Food added successfully!",
-      });
-
-      fetchData();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add food",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleAddWater = async () => {
-    if (!selectedWater) {
-      toast({
-        title: "Error",
-        description: "Please select water amount",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const amountMl = parseInt(selectedWater);
-
-      // Check if water log exists for today
-      const existingLog = await prisma.waterLog.findFirst({
-        where: {
-          userId: session.data?.user.id,
-          date: todayDate,
-        },
-      });
-
-      if (existingLog) {
-        await prisma.waterLog.update({
-          where: { id: existingLog.id },
-          data: { amountMl: existingLog.amountMl + amountMl },
-        });
-      } else {
-        await prisma.waterLog.create({
-          data: {
-            userId: session.data?.user.id,
-            amountMl,
-          },
-        });
-      }
-
-      toast({
-        title: "Success",
-        description: "Water intake added!",
-      });
-
-      fetchData();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add water",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const foodOptions = [
-    { id: "food_1", name: "Roti (1 piece)", calories: 130 },
-    { id: "food_2", name: "Rice (1 cup)", calories: 205 },
-    { id: "food_3", name: "Dal (100g)", calories: 117 },
-    { id: "food_4", name: "Paneer (100g)", calories: 265 },
-    { id: "food_5", name: "Egg (Whole)", calories: 78 },
-    { id: "food_6", name: "Chicken Breast (100g)", calories: 165 },
-    { id: "food_7", name: "Banana (1 medium)", calories: 105 },
-    { id: "food_8", name: "Oats (50g)", calories: 190 },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          {t("title")}
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-2">
-          {t("trackYourNutrition")}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Daily Stats */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>{t("todayTotal")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-slate-600 dark:text-slate-400">{t("calories")}</span>
-                <span className="font-semibold text-slate-900 dark:text-white">
-                  {dailyStats.calories} kcal
-                </span>
-              </div>
-              <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2">
-                <div
-                  className="bg-orange-500 h-2 rounded-full"
-                  style={{ width: `${Math.min(dailyStats.calories / 2000 * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-slate-600 dark:text-slate-400">{t("protein")}</span>
-                <span className="font-semibold text-slate-900 dark:text-white">
-                  {dailyStats.protein.toFixed(0)}g
-                </span>
-              </div>
-              <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2">
-                <div
-                  className="bg-blue-500 h-2 rounded-full"
-                  style={{ width: `${Math.min(dailyStats.protein / 160 * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-slate-600 dark:text-slate-400">{t("carbs")}</span>
-                <span className="font-semibold text-slate-900 dark:text-white">
-                  {dailyStats.carbs.toFixed(0)}g
-                </span>
-              </div>
-              <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2">
-                <div
-                  className="bg-green-500 h-2 rounded-full"
-                  style={{ width: `${Math.min(dailyStats.carbs / 250 * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-slate-600 dark:text-slate-400">{t("fat")}</span>
-                <span className="font-semibold text-slate-900 dark:text-white">
-                  {dailyStats.fat.toFixed(0)}g
-                </span>
-              </div>
-              <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2">
-                <div
-                  className="bg-yellow-500 h-2 rounded-full"
-                  style={{ width: `${Math.min(dailyStats.fat / 70 * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 border-t">
-              <div className="flex items-center gap-2">
-                <Water className="h-4 w-4 text-cyan-500" />
-                <span className="text-slate-600 dark:text-slate-400">{t("waterIntake")}</span>
-                <span className="font-semibold text-slate-900 dark:text-white ml-auto">
-                  {dailyStats.water} ml
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Add Food */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>{t("addFood")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>{t("foodName")}</Label>
-                  <Select value={selectedFood} onValueChange={setSelectedFood}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("selectFood")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {foodOptions.map((food) => (
-                        <SelectItem key={food.id} value={food.id}>
-                          {food.name} ({food.calories} kcal)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>{t("quantity")}</Label>
-                  <Input
-                    type="number"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    placeholder="100"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>{t("mealType")}</Label>
-                  <Select value={mealType} onValueChange={setMealType}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="BREAKFAST">{t("mealTypeBreakfast")}</SelectItem>
-                      <SelectItem value="LUNCH">{t("mealTypeLunch")}</SelectItem>
-                      <SelectItem value="DINNER">{t("mealTypeDinner")}</SelectItem>
-                      <SelectItem value="SNACK">{t("mealTypeSnack")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex items-end">
-                <Button onClick={handleAddFood} className="w-full" size="lg">
-                  {t("addFoodToLog")}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Food Logs */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Food Logs</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {recentLogs.length > 0 ? (
-            <div className="space-y-4">
-              {recentLogs.map((log) => (
-                <div key={log.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
-                  <div>
-                    <h3 className="font-semibold text-slate-900 dark:text-white">
-                      {log.food.name}
-                    </h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      {t("mealType" + log.mealType)} • {log.quantity} × {log.food.calories} kcal
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-slate-900 dark:text-white">
-                      {Math.round(log.food.calories * log.quantity)} kcal
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-slate-600 dark:text-slate-400">
-                {t("noFoodLogged")}
-              </p>
-              <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
-                {t("addYourFirstFood")}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
+  return <div className="space-y-6 page-enter">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="eyebrow">Daily fuel</p><h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Nutrition</h1><p className="mt-2 text-slate-600 dark:text-slate-400">Small, consistent choices add up.</p></div><Button variant="outline" onClick={() => void save({ type: "water", amountMl: 250 }, "250 ml added to today’s hydration.")} disabled={isSaving}><Droplets className="mr-2 h-4 w-4" /> Add 250 ml water</Button></div>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{targets.map(([label, key, target, unit, color], index) => { const value = data?.stats[key] ?? 0; return <Card key={key} className="motion-card" style={{ animationDelay: `${index * 70}ms` }}><CardContent className="pt-6"><div className="flex items-baseline justify-between"><p className="text-sm font-medium text-slate-600 dark:text-slate-300">{label}</p><span className="text-xs text-slate-500">{target} {unit}</span></div><p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{Math.round(value)} <span className="text-sm font-medium text-slate-500">{unit}</span></p><div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className={`${color} progress-fill h-full rounded-full`} style={{ width: `${Math.min((value / target) * 100, 100)}%` }} /></div></CardContent></Card>; })}</div>
+    <div className="grid gap-6 lg:grid-cols-5"><Card className="lg:col-span-2 motion-card" style={{ animationDelay: "280ms" }}><CardHeader><CardTitle>Log a meal</CardTitle></CardHeader><CardContent className="space-y-4"><div className="space-y-2"><Label htmlFor="food">Food</Label><Select value={selectedFood} onValueChange={setSelectedFood}><SelectTrigger id="food"><SelectValue placeholder="Choose a food" /></SelectTrigger><SelectContent>{data?.foods.map((food) => <SelectItem key={food.id} value={food.id}>{food.name} · {Math.round(food.calories)} kcal / {food.servingSize}</SelectItem>)}</SelectContent></Select></div><div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="quantity">Servings</Label><Input id="quantity" type="number" min="0.25" max="20" step="0.25" value={quantity} onChange={(event) => setQuantity(event.target.value)} /></div><div className="space-y-2"><Label htmlFor="meal">Meal</Label><Select value={mealType} onValueChange={setMealType}><SelectTrigger id="meal"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="BREAKFAST">Breakfast</SelectItem><SelectItem value="LUNCH">Lunch</SelectItem><SelectItem value="DINNER">Dinner</SelectItem><SelectItem value="SNACK">Snack</SelectItem></SelectContent></Select></div></div><Button className="w-full" disabled={!selectedFood || isSaving} onClick={() => void save({ foodId: selectedFood, quantity: Number(quantity), mealType }, "Your meal is in today’s log.")}><Plus className="mr-2 h-4 w-4" /> Add to today</Button></CardContent></Card>
+    <Card className="lg:col-span-3 motion-card" style={{ animationDelay: "350ms" }}><CardHeader><CardTitle>Today’s meals</CardTitle></CardHeader><CardContent>{data?.logs.length ? <div className="space-y-2">{data.logs.map((log) => <div key={log.id} className="flex items-center justify-between rounded-lg border border-slate-100 p-3 dark:border-slate-800"><div><p className="font-medium text-slate-900 dark:text-white">{log.food.name}</p><p className="text-sm text-slate-500">{log.mealType.toLowerCase()} · {log.quantity} serving{log.quantity === 1 ? "" : "s"}</p></div><p className="font-semibold text-slate-900 dark:text-white">{Math.round(log.food.calories * log.quantity)} kcal</p></div>)}</div> : <div className="py-12 text-center text-slate-500">Your food log is clear for today. Start with your next meal.</div>}</CardContent></Card></div>
+  </div>;
 }
