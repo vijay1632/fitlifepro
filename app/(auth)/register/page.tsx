@@ -5,11 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useTranslations } from "next-intl";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function RegisterPage() {
-  const t = useTranslations("auth");
   const router = useRouter();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -35,12 +33,12 @@ export default function RegisterPage() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
-      toast({ title: t("profileCreated"), description: "You can now sign in." });
+      toast({ title: "Account created", description: "You can now sign in." });
       router.push("/login");
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : t("loginFailed"),
+        description: error instanceof Error ? error.message : "We couldn’t create your account. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -60,11 +58,11 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">{t("email")}</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              placeholder={t("emailPlaceholder")}
+              placeholder="Enter your email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
@@ -72,11 +70,11 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">{t("password")}</Label>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
-              placeholder={t("passwordPlaceholder")}
+              placeholder="Create a password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
@@ -84,11 +82,11 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
+            <Label htmlFor="confirmPassword">Confirm password</Label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder={t("confirmNewPassword")}
+              placeholder="Enter your password again"
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               required
@@ -97,14 +95,14 @@ export default function RegisterPage() {
         </div>
 
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? t("loading") : t("createAccount")}
+          {isLoading ? "Creating account…" : "Create account"}
         </Button>
       </form>
 
       <p className="text-center text-slate-400 mt-6">
-        {t("alreadyHaveAccount")}{" "}
+        Already have an account?{" "}
         <a href="/login" className="text-primary hover:underline">
-          {t("signIn")}
+          Sign in
         </a>
       </p>
     </div>

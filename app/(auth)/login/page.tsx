@@ -6,11 +6,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useTranslations } from "next-intl";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function LoginPage() {
-  const t = useTranslations("auth");
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
@@ -31,12 +29,12 @@ export default function LoginPage() {
       if (result?.error) {
         toast({
           title: "Error",
-          description: t("invalidCredentials"),
+          description: "Enter a valid email and password.",
           variant: "destructive",
         });
       } else {
         toast({
-          title: t("loginSuccess"),
+          title: "Signed in",
           description: "Welcome back!",
         });
         router.push("/dashboard");
@@ -45,7 +43,7 @@ export default function LoginPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description: t("loginFailed"),
+        description: "We couldn’t sign you in. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -65,11 +63,11 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">{t("email")}</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              placeholder={t("emailPlaceholder")}
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -77,11 +75,11 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">{t("password")}</Label>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
-              placeholder={t("passwordPlaceholder")}
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -90,23 +88,17 @@ export default function LoginPage() {
         </div>
 
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? t("loading") : t("signIn")}
+          {isLoading ? "Signing in…" : "Sign in"}
         </Button>
       </form>
 
       <p className="text-center text-slate-400 mt-6">
-        {t("dontHaveAccount")}{" "}
+        New to FitLife Pro?{" "}
         <a href="/register" className="text-primary hover:underline">
-          {t("createAccount")}
+          Create an account
         </a>
       </p>
 
-      <div className="mt-8 rounded-lg border border-slate-700/70 bg-slate-800/60 p-3 text-center text-sm text-slate-400">
-        <p className="mb-2">Demo Credentials:</p>
-        <p>Admin: admin@fitlifepro.com / admin123</p>
-        <p>Trainer: trainer@fitlifepro.com / trainer123</p>
-        <p>Member: amit@example.com / member123</p>
-      </div>
     </div>
   );
 }
